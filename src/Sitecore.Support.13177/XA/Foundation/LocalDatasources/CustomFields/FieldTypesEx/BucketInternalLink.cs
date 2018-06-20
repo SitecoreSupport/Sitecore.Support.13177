@@ -40,7 +40,12 @@
         CurrentDatasource = value
       };
       EditRenderingPropertiesParameters editRenderingPropertiesParameters = GetEditRenderingPropertiesParameters(contentItem);
-      getRenderingDatasourceArgs.CustomData.Add("EditRenderingPropertiesParameters", editRenderingPropertiesParameters);
+      #region Added code
+      if (editRenderingPropertiesParameters != null)
+      #endregion
+      {
+        getRenderingDatasourceArgs.CustomData.Add("EditRenderingPropertiesParameters", editRenderingPropertiesParameters);
+      }
       CorePipeline.Run("getRenderingDatasource", getRenderingDatasourceArgs);
       if (string.IsNullOrEmpty(getRenderingDatasourceArgs.DialogUrl))
       {
@@ -56,28 +61,36 @@
     protected override EditRenderingPropertiesParameters GetEditRenderingPropertiesParameters(Item contentItem)
     {
       NameValueCollection parametersFromSuspendedPipeline = GetParametersFromSuspendedPipeline();
-      string text = parametersFromSuspendedPipeline["handle"];
-      LayoutModel layoutModel = (text == null) ? new LayoutModel(contentItem) : new LayoutModel(WebUtil.GetSessionValue(text).ToString());
-      ID deviceId = new ID(parametersFromSuspendedPipeline["device"]);
-      List<RenderingModel> renderingsCollection = layoutModel.Devices[deviceId].Renderings.RenderingsCollection;
-      string value = parametersFromSuspendedPipeline["selectedindex"];
-      if (renderingsCollection.Any() && !string.IsNullOrWhiteSpace(value))
+      #region Added code
+      if (parametersFromSuspendedPipeline != null)
       {
-        int index = int.Parse(parametersFromSuspendedPipeline["selectedindex"]);
-        RenderingModel renderingModel = renderingsCollection[index];
+      #endregion
+        string text = parametersFromSuspendedPipeline["handle"];
+        LayoutModel layoutModel = (text == null) ? new LayoutModel(contentItem) : new LayoutModel(WebUtil.GetSessionValue(text).ToString());
+        ID deviceId = new ID(parametersFromSuspendedPipeline["device"]);
+        List<RenderingModel> renderingsCollection = layoutModel.Devices[deviceId].Renderings.RenderingsCollection;
+        string value = parametersFromSuspendedPipeline["selectedindex"];
+        if (renderingsCollection.Any() && !string.IsNullOrWhiteSpace(value))
+        {
+          int index = int.Parse(parametersFromSuspendedPipeline["selectedindex"]);
+          RenderingModel renderingModel = renderingsCollection[index];
+          return new EditRenderingPropertiesParameters
+          {
+            DeviceId = deviceId,
+            Layout = layoutModel.ToString(),
+            Placeholder = renderingModel.Placeholder
+          };
+        }
         return new EditRenderingPropertiesParameters
         {
           DeviceId = deviceId,
           Layout = layoutModel.ToString(),
-          Placeholder = renderingModel.Placeholder
+          Placeholder = string.Empty
         };
+      #region Added code
       }
-      return new EditRenderingPropertiesParameters
-      {
-        DeviceId = deviceId,
-        Layout = layoutModel.ToString(),
-        Placeholder = string.Empty
-      };
+      return null;
+      #endregion
     }
   }
 }
